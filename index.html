@@ -1,0 +1,644 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Gyani</title>
+    <!-- Load Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Load Google Font 'Tiro Devanagari Nepali' (for UI's Devanagari-style Romanized text) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Tiro+Devanagari+Nepali:wght@400&display=swap" rel="stylesheet">
+    <!-- Load 'VT323' Font (for AI's Romanized output) -->
+    <link href="https://fonts.googleapis.com/css2?family=VT323&display=swap" rel="stylesheet">
+
+    <style>
+        /* CSS Variables for Theming */
+        html {
+            /* Default: Nepali Red */
+            --color-bg-start: #2a0a0a;
+            --color-bg-end: #3d1a0d;
+            --color-primary: #ff6600; /* Saffron */
+            --color-primary-text: #ff9900;
+            --color-secondary-text: #ffebcc;
+            --color-border: #993300;
+            --color-button-bg: #cc3300;
+            --color-button-border: #ff6600;
+            --color-header-text: #ffcc99;
+            --color-shadow: #4d0f00;
+            --color-input-border: #ff9900;
+            --color-input-focus: #ff6600;
+            --color-quote-border: #ff9900;
+            --color-quote-name: #ffcc99;
+        }
+
+        body {
+            background: linear-gradient(-45deg, var(--color-bg-start), var(--color-bg-end), var(--color-bg-start), var(--color-bg-end));
+            background-size: 400% 400%;
+            animation: gradientBG 15s ease infinite;
+            font-family: 'Tiro Devanagari Nepali', serif;
+            color: var(--color-secondary-text);
+        }
+        
+        /* Class for AI's Romanized output */
+        .font-romanized {
+            font-family: 'VT323', monospace;
+            font-size: 1.5rem; 
+            line-height: 1.7rem;
+            word-wrap: break-word; /* Ensure long Romanized text wraps */
+        }
+
+        @keyframes gradientBG {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0; }
+        }
+        .blinking-cursor {
+            animation: blink 1s step-end infinite;
+        }
+
+        /* Custom Scrollbar Theming */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #111; }
+        ::-webkit-scrollbar-thumb { 
+            background: var(--color-primary);
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover { background: var(--color-primary-text); }
+        
+        /* Canvas Styling */
+        #matrix-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+        }
+    </style>
+</head>
+<body class="h-full flex items-center justify-center p-4 text-lg">
+
+    <!-- Background Canvas -->
+    <canvas id="matrix-canvas"></canvas>
+
+    <!-- Main App Container -->
+    <div id="main-app" class="w-full max-w-2xl bg-black/70 backdrop-blur-md rounded-lg shadow-2xl border overflow-hidden transition-all duration-300"
+         style="border-color: var(--color-border); box-shadow: 0 0 20px var(--color-shadow);">
+        
+        <!-- Header Bar -->
+        <div class="flex items-center justify-between p-3 bg-gray-900/70 border-b transition-all duration-300" style="border-color: var(--color-border);">
+            <div class="flex items-center space-x-2">
+                <!-- Nepal Flag Colors -->
+                <span class="w-3 h-3 bg-red-600 rounded-full"></span>
+                <span class="w-3 h-3 bg-blue-600 rounded-full"></span>
+                <span class="w-3 h-3 bg-white rounded-full"></span>
+            </div>
+            <span id="header-title" class="text-sm" style="color: var(--color-header-text);">/usr/bin/Gyani</span>
+            <button id="settings-button" class="text-sm px-2 py-0 rounded border hover:bg-gray-800" style="color: var(--color-primary-text); border-color: var(--color-primary);">
+                [S] Settings
+            </button>
+        </div>
+        
+        <div id="welcome-message" class="px-6 pt-4 text-sm" style="color: var(--color-primary-text);"></div>
+
+        <!-- Oracle's Response Area - Responsive Height: h-72 on small screens, h-96 on medium+ screens -->
+        <div class="p-6 h-72 md:h-96 overflow-y-auto" id="response-area">
+            <p style="color: var(--color-header-text);">&gt; Jadan bhayo...</p>
+            <p style="color: var(--color-header-text);">&gt; Prashna parkhandai...<span class="blinking-cursor">_</span></p>
+        </div>
+
+        <!-- Loading Indicator -->
+        <div id="loading" class="hidden px-6 pb-4">
+            <p style="color: var(--color-header-text);">&gt; AI sochdai hunuhunchha...<span class="blinking-cursor">_</span></p>
+        </div>
+
+        <!-- User Input Area - Responsive Flex Layout -->
+        <div class="p-4 bg-black/50 border-t transition-all duration-300" style="border-color: var(--color-border);">
+            <div class="flex flex-col sm:flex-row gap-3">
+                <input
+                    type="text"
+                    id="user-prompt"
+                    placeholder="Afno prashna sodhnuhos..."
+                    class="flex-1 bg-gray-900/80 border rounded-md px-4 py-2 placeholder-opacity-60 focus:outline-none focus:ring-2 text-lg transition-all duration-300"
+                    style="border-color: var(--color-input-border); color: var(--color-secondary-text); --tw-ring-color: var(--color-input-focus);"
+                />
+                <button
+                    id="submit-button"
+                    class="text-white font-bold px-6 py-2 rounded-md border hover:opacity-80 focus:outline-none focus:ring-2 transition-all duration-300 text-lg"
+                    style="background-color: var(--color-button-bg); border-color: var(--color-button-border); --tw-ring-color: var(--color-button-border);"
+                >
+                    Pathaunuhos
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modals -->
+    <div id="modal-backdrop" class="hidden fixed inset-0 bg-black/60 backdrop-blur-sm z-40"></div>
+    
+    <!-- User Name Input Modal -->
+    <div id="name-modal" class="hidden fixed inset-0 flex items-center justify-center p-4 z-50">
+        <div class="bg-gray-900 border rounded-lg shadow-lg max-w-sm w-full" style="border-color: var(--color-border);">
+            <div class="p-4 border-b" style="border-color: var(--color-border);">
+                <h3 class="text-xl font-bold" style="color: var(--color-primary-text);">Swagat Chha!</h3>
+            </div>
+            <div class="p-4 space-y-4">
+                <label for="name-input" class="block">Kripaya afno nam pravishta garnuhos:</label>
+                <input
+                    type="text"
+                    id="name-input"
+                    placeholder="Tapai'nko nam..."
+                    class="w-full bg-gray-800 border rounded-md px-4 py-2 focus:outline-none focus:ring-2 text-lg"
+                    style="border-color: var(--color-input-border); color: var(--color-secondary-text); --tw-ring-color: var(--color-input-focus);"
+                />
+            </div>
+            <div class="p-3 bg-gray-900/50 rounded-b-lg text-right">
+                <button
+                    id="save-name-button"
+                    class="text-white font-bold px-4 py-2 rounded-md border"
+                    style="background-color: var(--color-button-bg); border-color: var(--color-button-border);"
+                >
+                     Surakshit Garnuhos
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Settings Modal (Theme and AI Name) -->
+    <div id="settings-modal" class="hidden fixed inset-0 flex items-center justify-center p-4 z-50">
+        <div class="bg-gray-900 border rounded-lg shadow-lg max-w-sm w-full" style="border-color: var(--color-border);">
+            <div class="p-4 border-b flex justify-between items-center" style="border-color: var(--color-border);">
+                <h3 class="text-xl font-bold" style="color: var(--color-primary-text);">Settings</h3>
+                <button id="close-settings-modal" class="text-2xl" style="color: var(--color-secondary-text);">&times;</button>
+            </div>
+            <div class="p-4 space-y-6">
+                
+                <!-- 1. AI Name Setting -->
+                <div>
+                    <h4 class="text-lg font-bold mb-2" style="color: var(--color-primary-text);">AI ko Nam: (AI Name)</h4>
+                    <label for="ai-name-input" class="block text-sm opacity-80 mb-2">Yo nam le AI ko byaktitwa (personality) ra display title badalchha.</label>
+                    <input
+                        type="text"
+                        id="ai-name-input"
+                        placeholder="AI ko nam..."
+                        class="w-full bg-gray-800 border rounded-md px-4 py-2 focus:outline-none focus:ring-2 text-lg"
+                        style="border-color: var(--color-input-border); color: var(--color-secondary-text); --tw-ring-color: var(--color-input-focus);"
+                    />
+                    <button id="save-ai-name-button" class="mt-3 w-full text-white font-bold px-4 py-2 rounded-md border"
+                        style="background-color: var(--color-button-bg); border-color: var(--color-button-border);">
+                        AI Nam Surakshit Garnuhos
+                    </button>
+                </div>
+
+                <!-- 2. Theme Setting -->
+                <div>
+                    <h4 class="text-lg font-bold mb-2" style="color: var(--color-primary-text);">Theme Chhannuhos: (Select Theme)</h4>
+                    <div class="space-y-3">
+                        <button class="theme-button w-full text-left p-3 rounded border-2 border-red-500 bg-red-900/50" data-theme="nepali-red">
+                            Nepali Rato (Default)
+                        </button>
+                        <button class="theme-button w-full text-left p-3 rounded border-2 border-green-500 bg-green-900/50" data-theme="matrix-green">
+                            Matrix Hariyo (Matrix Green)
+                        </button>
+                        <button class="theme-button w-full text-left p-3 rounded border-2 border-blue-500 bg-blue-900/50" data-theme="ocean-blue">
+                            Sagar Nilo (Ocean Blue)
+                        </button>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <!-- Error Message Modal -->
+    <div id="error-modal" class="hidden fixed inset-0 flex items-center justify-center p-4 z-50">
+        <div class="bg-gray-900 border border-red-500 rounded-lg shadow-lg max-w-sm w-full">
+             <div class="p-4 border-b border-red-500/30">
+                 <h3 class="text-xl font-bold text-red-400">Jadan Truti (Connection Error)</h3>
+             </div>
+             <div class="p-4">
+                 <p class="text-red-300" id="error-message">Euta agyat truti bhayo. (An unknown error occurred.)</p>
+             </div>
+             <div class="p-3 bg-gray-900/50 rounded-b-lg text-right">
+                 <button
+                     id="close-error-modal"
+                     class="bg-red-600/80 text-white px-4 py-2 rounded-md border border-red-400 hover:bg-red-500 focus:outline-none focus:ring-2 focus:ring-red-300"
+                 >
+                     Banda Garnuhos
+                 </button>
+             </div>
+         </div>
+    </div>
+
+    <script type="module">
+        // --- Firebase Imports ---
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { 
+            getAuth, 
+            signInAnonymously, 
+            signInWithCustomToken, 
+            onAuthStateChanged 
+        } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { 
+            getFirestore, 
+            doc, 
+            setDoc, 
+            onSnapshot,
+            setLogLevel
+        } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // --- DOM Elements ---
+        const userPrompt = document.getElementById('user-prompt');
+        const submitButton = document.getElementById('submit-button');
+        const responseArea = document.getElementById('response-area');
+        const loadingIndicator = document.getElementById('loading');
+        const welcomeMessage = document.getElementById('welcome-message');
+        const headerTitle = document.getElementById('header-title');
+        
+        // Modals
+        const modalBackdrop = document.getElementById('modal-backdrop');
+        const errorModal = document.getElementById('error-modal');
+        const errorMessage = document.getElementById('error-message');
+        const closeErrorModal = document.getElementById('close-error-modal');
+        
+        const nameModal = document.getElementById('name-modal');
+        const nameInput = document.getElementById('name-input');
+        const saveNameButton = document.getElementById('save-name-button');
+        
+        const settingsModal = document.getElementById('settings-modal');
+        const settingsButton = document.getElementById('settings-button');
+        const closeSettingsModal = document.getElementById('close-settings-modal');
+        const themeButtons = document.querySelectorAll('.theme-button');
+
+        const aiNameInput = document.getElementById('ai-name-input');
+        const saveAiNameButton = document.getElementById('save-ai-name-button');
+
+        // --- Canvas ---
+        const canvas = document.getElementById('matrix-canvas');
+        const ctx = canvas.getContext('2d');
+        let columns;
+        let drops;
+        const fontSize = 18;
+        const characters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789@#$%^&*()"; 
+        
+        // --- App State ---
+        let db, auth, userId, userName, currentTheme;
+        let aiName = "Gyani"; // Default AI Name
+        let profileDocRef;
+
+        // --- Firebase & App Config ---
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+        const firebaseConfig = JSON.parse(typeof __firebase_config !== 'undefined' ? __firebase_config : '{}');
+        const apiKey = ""; // API key for Gemini
+        const geminiApiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
+
+        // System Prompt will be constructed dynamically
+        let systemPrompt = ``;
+        
+        // --- Functions ---
+
+        // --- Canvas Animation ---
+        function setupCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            columns = Math.floor(canvas.width / fontSize);
+            drops = [];
+            for (let i = 0; i < columns; i++) drops[i] = 1;
+        }
+
+        function drawMatrixRain() {
+            ctx.fillStyle = "rgba(0, 0, 0, 0.05)"; // Fading effect
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            ctx.fillStyle = getComputedStyle(document.documentElement).getPropertyValue('--color-primary'); // Use theme color
+            ctx.font = `${fontSize}px 'VT323'`;
+
+            for (let i = 0; i < drops.length; i++) {
+                const text = characters[Math.floor(Math.random() * characters.length)];
+                ctx.fillText(text, i * fontSize, drops[i] * fontSize);
+                if (drops[i] * fontSize > canvas.height && Math.random() > 0.975) drops[i] = 0;
+                drops[i]++;
+            }
+        }
+
+        // --- Theming ---
+        function applyTheme(themeName) {
+            const root = document.documentElement;
+            switch (themeName) {
+                case 'matrix-green':
+                    root.style.setProperty('--color-bg-start', '#0a1a0a');
+                    root.style.setProperty('--color-bg-end', '#0d1a0d');
+                    root.style.setProperty('--color-primary', '#00ff00');
+                    root.style.setProperty('--color-primary-text', '#33ff33');
+                    root.style.setProperty('--color-secondary-text', '#ccffcc');
+                    root.style.setProperty('--color-border', '#008000');
+                    root.style.setProperty('--color-button-bg', '#006400');
+                    root.style.setProperty('--color-button-border', '#00ff00');
+                    root.style.setProperty('--color-header-text', '#99ff99');
+                    root.style.setProperty('--color-shadow', '#003300');
+                    root.style.setProperty('--color-input-border', '#00cc00');
+                    root.style.setProperty('--color-input-focus', '#33ff33');
+                    root.style.setProperty('--color-quote-border', '#00ff00');
+                    root.style.setProperty('--color-quote-name', '#99ff99');
+                    break;
+                case 'ocean-blue':
+                    root.style.setProperty('--color-bg-start', '#0a0a2a');
+                    root.style.setProperty('--color-bg-end', '#0d0d3a');
+                    root.style.setProperty('--color-primary', '#00aaff');
+                    root.style.setProperty('--color-primary-text', '#33bbff');
+                    root.style.setProperty('--color-secondary-text', '#cceeff');
+                    root.style.setProperty('--color-border', '#0077cc');
+                    root.style.setProperty('--color-button-bg', '#0055aa');
+                    root.style.setProperty('--color-button-border', '#00aaff');
+                    root.style.setProperty('--color-header-text', '#99ddff');
+                    root.style.setProperty('--color-shadow', '#000033');
+                    root.style.setProperty('--color-input-border', '#0088dd');
+                    root.style.setProperty('--color-input-focus', '#33bbff');
+                    root.style.setProperty('--color-quote-border', '#00aaff');
+                    root.style.setProperty('--color-quote-name', '#99ddff');
+                    break;
+                case 'nepali-red':
+                default:
+                    root.style.setProperty('--color-bg-start', '#2a0a0a');
+                    root.style.setProperty('--color-bg-end', '#3d1a0d');
+                    root.style.setProperty('--color-primary', '#ff6600');
+                    root.style.setProperty('--color-primary-text', '#ff9900');
+                    root.style.setProperty('--color-secondary-text', '#ffebcc');
+                    root.style.setProperty('--color-border', '#993300');
+                    root.style.setProperty('--color-button-bg', '#cc3300');
+                    root.style.setProperty('--color-button-border', '#ff6600');
+                    root.style.setProperty('--color-header-text', '#ffcc99');
+                    root.style.setProperty('--color-shadow', '#4d0f00');
+                    root.style.setProperty('--color-input-border', '#ff9900');
+                    root.style.setProperty('--color-input-focus', '#ff6600');
+                    root.style.setProperty('--color-quote-border', '#ff9900');
+                    root.style.setProperty('--color-quote-name', '#ffcc99');
+                    break;
+            }
+        }
+
+        // --- Modals ---
+        function showModal(modal) {
+            modalBackdrop.classList.remove('hidden');
+            modal.classList.remove('hidden');
+        }
+        function hideModal(modal) {
+            modalBackdrop.classList.add('hidden');
+            modal.classList.add('hidden');
+        }
+
+        // --- Firebase & Profile ---
+        async function initFirebase() {
+            try {
+                const app = initializeApp(firebaseConfig);
+                db = getFirestore(app);
+                auth = getAuth(app);
+                setLogLevel('Debug');
+
+                onAuthStateChanged(auth, async (user) => {
+                    if (user) {
+                        userId = user.uid;
+                        setupProfileListener(userId);
+                    } else {
+                        if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                            await signInWithCustomToken(auth, __initial_auth_token);
+                        } else {
+                            await signInAnonymously(auth);
+                        }
+                    }
+                });
+            } catch (error) {
+                console.error("Firebase Init Error:", error);
+                displayError("Firebase suru garna sakiyena. (Firebase could not start.)");
+            }
+        }
+
+        function setupProfileListener(uid) {
+            profileDocRef = doc(db, 'artifacts', appId, 'users', uid, 'settings', 'userProfile');
+            
+            onSnapshot(profileDocRef, (docSnap) => {
+                if (docSnap.exists()) {
+                    const data = docSnap.data();
+                    userName = data.name;
+                    currentTheme = data.theme || 'nepali-red'; 
+                    aiName = data.aiName || 'Gyani'; // Load AI Name
+                    
+                    applyTheme(currentTheme);
+                    updateUIBasedOnProfile();
+
+                    if (!userName) {
+                        showModal(nameModal);
+                    } else {
+                        hideModal(nameModal);
+                    }
+                } else {
+                    applyTheme('nepali-red');
+                    updateUIBasedOnProfile();
+                    showModal(nameModal);
+                }
+            });
+        }
+
+        function updateUIBasedOnProfile() {
+            // Update Header Title
+            headerTitle.textContent = `/usr/bin/${aiName}`;
+            
+            // Update Welcome Message
+            if (userName) {
+                welcomeMessage.textContent = `> ${userName} lai swagat chha!`;
+            } else {
+                welcomeMessage.textContent = ``;
+            }
+
+            // Update AI Name Input in Settings Modal
+            aiNameInput.value = aiName;
+
+            // Dynamically set the system prompt
+            systemPrompt = `
+You are "${aiName}" (The Wise One), a helpful and witty AI guru from Nepal.
+A user named "${userName || 'user'}" has asked you a question.
+Your task is to respond with a short, insightful, or funny two-line verse (like a 'doha' or 'shlok') IN ROMANIZED NEPALI (e.g., 'Gyan nai shakti ho...').
+Your response MUST be a single, clean JSON object with two keys: "quote" (a single string with the two lines separated by "\\n") and "by" (which should always be "${aiName}").
+Example: {"quote": "Gyan nai shakti ho, karma nai puja ho.\\nAfno marga china, sadhai khusi hou.", "by": "${aiName}"}
+`;
+        }
+
+        async function saveProfileData(dataToSave) {
+            if (!profileDocRef) {
+                displayError("Profile ref not set! Authentication error.");
+                return;
+            }
+            try {
+                await setDoc(profileDocRef, dataToSave, { merge: true });
+            } catch (error) {
+                console.error("Error saving profile:", error);
+                displayError("Profile surakshit garna sakiyena. (Could not save profile.)");
+            }
+        }
+
+        // --- Gemini API Call ---
+        async function handleQuery() {
+            if (!userName) {
+                displayError("Kripaya pahile tapai'nko nam surakshit garnuhos. (Please save your name first.)");
+                showModal(nameModal);
+                return;
+            }
+            
+            const query = userPrompt.value;
+            if (!query) return;
+
+            userPrompt.value = "";
+            loadingIndicator.classList.remove('hidden');
+            responseArea.innerHTML = '';
+            submitButton.disabled = true;
+            submitButton.classList.add('opacity-50');
+
+            // Add user's name to the query
+            const fullQuery = `User: ${userName}. Question: ${query}`;
+
+            try {
+                const payload = {
+                    contents: [{ parts: [{ text: fullQuery }] }],
+                    systemInstruction: { parts: [{ text: systemPrompt }] },
+                    generationConfig: {
+                        responseMimeType: "application/json",
+                        responseSchema: {
+                            type: "OBJECT",
+                            properties: { "quote": { "type": "STRING" }, "by": { "type": "STRING" } },
+                            required: ["quote", "by"]
+                        }
+                    }
+                };
+                
+                const result = await fetchWithBackoff(geminiApiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                
+                const responseData = extractJsonFromResponse(result);
+                displayResponse(query, responseData);
+
+            } catch (error) {
+                console.error("Error calling Gemini API:", error);
+                displayError(error.message || "AI bata pratikriya prapta garna sakiyena. (Could not get response from AI.)");
+            } finally {
+                loadingIndicator.classList.add('hidden');
+                submitButton.disabled = false;
+                submitButton.classList.remove('opacity-50');
+            }
+        }
+
+        async function fetchWithBackoff(url, options, retries = 3, delay = 1000) {
+            try {
+                const response = await fetch(url, options);
+                if (!response.ok) {
+                    if (response.status === 429 && retries > 0) {
+                        await new Promise(res => setTimeout(res, delay));
+                        return fetchWithBackoff(url, options, retries - 1, delay * 2);
+                    }
+                    throw new Error(`API Error: ${response.status} ${response.statusText}`);
+                }
+                return await response.json();
+            } catch (error) {
+                if (retries > 0) {
+                    await new Promise(res => setTimeout(res, delay));
+                    return fetchWithBackoff(url, options, retries - 1, delay * 2);
+                }
+                throw error;
+            }
+        }
+
+        function extractJsonFromResponse(result) {
+            try {
+                const text = result.candidates[0].content.parts[0].text;
+                // Safely parse JSON, handling potential markdown fences
+                const jsonMatch = text.match(/```json\n([\s\S]*?)\n```/);
+                const jsonText = jsonMatch ? jsonMatch[1].trim() : text.trim();
+                return JSON.parse(jsonText);
+            } catch (e) {
+                console.error("Failed to parse JSON response:", result, e);
+                throw new Error("AI ko pratikriya bujhna sakiyena. (Could not understand AI's response.)");
+            }
+        }
+
+        // --- UI Display ---
+        function displayResponse(query, responseData) {
+            const formattedQuote = responseData.quote.replace(/\\n/g, '<br>');
+            const aiDisplayName = responseData.by || aiName;
+
+            responseArea.innerHTML = `
+                <p class="mb-2 opacity-70" style="color: var(--color-header-text);">&gt; ${userName} ko prashna: "${query}"</p>
+                <div class="border-l-2 pl-3" style="border-color: var(--color-quote-border);">
+                    <p class="text-white font-romanized">${formattedQuote}</p>
+                    <p class="text-sm mt-2 opacity-80" style="color: var(--color-quote-name);">- ${aiDisplayName}</p>
+                </div>
+                <p class="mt-4" style="color: var(--color-header-text);">&gt; Prashna parkhandai...<span class="blinking-cursor">_</span></p>
+            `;
+            responseArea.scrollTop = responseArea.scrollHeight;
+        }
+
+        function displayError(message) {
+            errorMessage.textContent = message;
+            showModal(errorModal);
+            responseArea.innerHTML = `
+                <p class="text-red-400">&gt; Truti: ${message}</p>
+                <p class="mt-2" style="color: var(--color-header-text);">&gt; Kripaya feri prayas garnuhos...<span class="blinking-cursor">_</span></p>
+            `;
+        }
+
+        // --- Event Listeners ---
+        submitButton.addEventListener('click', handleQuery);
+        userPrompt.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') handleQuery();
+        });
+        
+        closeErrorModal.addEventListener('click', () => hideModal(errorModal));
+
+        // User Name Modal
+        saveNameButton.addEventListener('click', () => {
+            const newName = nameInput.value.trim();
+            if (newName) {
+                saveProfileData({ name: newName });
+            } else {
+                displayError("Kripaya ek manya nam pravishta garnuhos. (Please enter a valid name.)");
+            }
+        });
+
+        // Settings Modal
+        settingsButton.addEventListener('click', () => showModal(settingsModal));
+        closeSettingsModal.addEventListener('click', () => hideModal(settingsModal));
+        
+        // Save AI Name
+        saveAiNameButton.addEventListener('click', () => {
+            const newAiName = aiNameInput.value.trim();
+            if (newAiName) {
+                // Capitalize the first letter for display consistency
+                const formattedAiName = newAiName.charAt(0).toUpperCase() + newAiName.slice(1);
+                saveProfileData({ aiName: formattedAiName });
+                hideModal(settingsModal);
+            } else {
+                displayError("Kripaya AI ko lagi ek nam pravishta garnuhos.");
+            }
+        });
+
+        // Save Theme
+        themeButtons.forEach(button => {
+            button.addEventListener('click', () => {
+                const themeName = button.dataset.theme;
+                saveProfileData({ theme: themeName });
+                hideModal(settingsModal);
+            });
+        });
+
+        // --- App Initialization ---
+        setupCanvas();
+        setInterval(drawMatrixRain, 60);
+        window.addEventListener('resize', setupCanvas);
