@@ -14,12 +14,10 @@
     <link href="https://fonts.googleapis.com/css2?family=VT323&display=swap" rel="stylesheet">
 
     <style>
-        /* CSS Variables for Theming */
         html {
-            /* Default: Nepali Red */
             --color-bg-start: #2a0a0a;
             --color-bg-end: #3d1a0d;
-            --color-primary: #ff6600; /* Saffron */
+            --color-primary: #ff6600;
             --color-primary-text: #ff9900;
             --color-secondary-text: #ffebcc;
             --color-border: #993300;
@@ -40,21 +38,17 @@
             font-family: 'Tiro Devanagari Nepali', serif;
             color: var(--color-secondary-text);
         }
-        
-        /* Class for AI's Romanized output */
         .font-romanized {
             font-family: 'VT323', monospace;
             font-size: 1.5rem; 
             line-height: 1.7rem;
-            word-wrap: break-word; /* Ensure long Romanized text wraps */
+            word-wrap: break-word;
         }
-
         @keyframes gradientBG {
             0% { background-position: 0% 50%; }
             50% { background-position: 100% 50%; }
             100% { background-position: 0% 50%; }
         }
-
         @keyframes blink {
             0%, 100% { opacity: 1; }
             50% { opacity: 0; }
@@ -62,8 +56,6 @@
         .blinking-cursor {
             animation: blink 1s step-end infinite;
         }
-
-        /* Custom Scrollbar Theming */
         ::-webkit-scrollbar { width: 8px; }
         ::-webkit-scrollbar-track { background: #111; }
         ::-webkit-scrollbar-thumb { 
@@ -71,8 +63,6 @@
             border-radius: 4px;
         }
         ::-webkit-scrollbar-thumb:hover { background: var(--color-primary-text); }
-        
-        /* Canvas Styling */
         #matrix-canvas {
             position: fixed;
             top: 0;
@@ -84,18 +74,14 @@
     </style>
 </head>
 <body class="h-full flex items-center justify-center p-4 text-lg">
-
     <!-- Background Canvas -->
     <canvas id="matrix-canvas"></canvas>
-
     <!-- Main App Container -->
     <div id="main-app" class="w-full max-w-2xl bg-black/70 backdrop-blur-md rounded-lg shadow-2xl border overflow-hidden transition-all duration-300"
          style="border-color: var(--color-border); box-shadow: 0 0 20px var(--color-shadow);">
-        
         <!-- Header Bar -->
         <div class="flex items-center justify-between p-3 bg-gray-900/70 border-b transition-all duration-300" style="border-color: var(--color-border);">
             <div class="flex items-center space-x-2">
-                <!-- Nepal Flag Colors -->
                 <span class="w-3 h-3 bg-red-600 rounded-full"></span>
                 <span class="w-3 h-3 bg-blue-600 rounded-full"></span>
                 <span class="w-3 h-3 bg-white rounded-full"></span>
@@ -105,21 +91,17 @@
                 [S] Settings
             </button>
         </div>
-        
         <div id="welcome-message" class="px-6 pt-4 text-sm" style="color: var(--color-primary-text);"></div>
-
-        <!-- Oracle's Response Area - Responsive Height: h-72 on small screens, h-96 on medium+ screens -->
+        <!-- Oracle's Response Area -->
         <div class="p-6 h-72 md:h-96 overflow-y-auto" id="response-area">
             <p style="color: var(--color-header-text);">&gt; Jadan bhayo...</p>
             <p style="color: var(--color-header-text);">&gt; Prashna parkhandai...<span class="blinking-cursor">_</span></p>
         </div>
-
         <!-- Loading Indicator -->
         <div id="loading" class="hidden px-6 pb-4">
             <p style="color: var(--color-header-text);">&gt; AI sochdai hunuhunchha...<span class="blinking-cursor">_</span></p>
         </div>
-
-        <!-- User Input Area - Responsive Flex Layout -->
+        <!-- User Input Area -->
         <div class="p-4 bg-black/50 border-t transition-all duration-300" style="border-color: var(--color-border);">
             <div class="flex flex-col sm:flex-row gap-3">
                 <input
@@ -139,11 +121,8 @@
             </div>
         </div>
     </div>
-
     <!-- Modals -->
     <div id="modal-backdrop" class="hidden fixed inset-0 bg-black/60 backdrop-blur-sm z-40"></div>
-    
-    <!-- User Name Input Modal -->
     <div id="name-modal" class="hidden fixed inset-0 flex items-center justify-center p-4 z-50">
         <div class="bg-gray-900 border rounded-lg shadow-lg max-w-sm w-full" style="border-color: var(--color-border);">
             <div class="p-4 border-b" style="border-color: var(--color-border);">
@@ -170,8 +149,6 @@
             </div>
         </div>
     </div>
-
-    <!-- Settings Modal (Theme and AI Name) -->
     <div id="settings-modal" class="hidden fixed inset-0 flex items-center justify-center p-4 z-50">
         <div class="bg-gray-900 border rounded-lg shadow-lg max-w-sm w-full" style="border-color: var(--color-border);">
             <div class="p-4 border-b flex justify-between items-center" style="border-color: var(--color-border);">
@@ -179,7 +156,6 @@
                 <button id="close-settings-modal" class="text-2xl" style="color: var(--color-secondary-text);">&times;</button>
             </div>
             <div class="p-4 space-y-6">
-                
                 <!-- 1. AI Name Setting -->
                 <div>
                     <h4 class="text-lg font-bold mb-2" style="color: var(--color-primary-text);">AI ko Nam: (AI Name)</h4>
@@ -196,7 +172,6 @@
                         AI Nam Surakshit Garnuhos
                     </button>
                 </div>
-
                 <!-- 2. Theme Setting -->
                 <div>
                     <h4 class="text-lg font-bold mb-2" style="color: var(--color-primary-text);">Theme Chhannuhos: (Select Theme)</h4>
@@ -212,12 +187,9 @@
                         </button>
                     </div>
                 </div>
-
             </div>
         </div>
     </div>
-
-    <!-- Error Message Modal -->
     <div id="error-modal" class="hidden fixed inset-0 flex items-center justify-center p-4 z-50">
         <div class="bg-gray-900 border border-red-500 rounded-lg shadow-lg max-w-sm w-full">
              <div class="p-4 border-b border-red-500/30">
@@ -236,23 +208,25 @@
              </div>
          </div>
     </div>
-
     <script type="module">
+        // -------- CONFIGURE THESE --------
+        // 1. Provide your Firebase configuration
+        const firebaseConfig = {
+            apiKey: "YOUR_FIREBASE_API_KEY",
+            authDomain: "YOUR_FIREBASE_AUTH_DOMAIN",
+            projectId: "YOUR_FIREBASE_PROJECT_ID",
+            storageBucket: "YOUR_FIREBASE_STORAGE_BUCKET",
+            messagingSenderId: "YOUR_FIREBASE_MSG_SENDER_ID",
+            appId: "YOUR_FIREBASE_APP_ID"
+        };
+        // 2. Gemini API Key (for Google AI): https://aistudio.google.com/
+        const geminiApiKey = "YOUR_GEMINI_API_KEY";
+        // ----------------------------------
+
         // --- Firebase Imports ---
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { 
-            getAuth, 
-            signInAnonymously, 
-            signInWithCustomToken, 
-            onAuthStateChanged 
-        } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { 
-            getFirestore, 
-            doc, 
-            setDoc, 
-            onSnapshot,
-            setLogLevel
-        } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, setDoc, onSnapshot, setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         // --- DOM Elements ---
         const userPrompt = document.getElementById('user-prompt');
@@ -261,22 +235,17 @@
         const loadingIndicator = document.getElementById('loading');
         const welcomeMessage = document.getElementById('welcome-message');
         const headerTitle = document.getElementById('header-title');
-        
-        // Modals
         const modalBackdrop = document.getElementById('modal-backdrop');
         const errorModal = document.getElementById('error-modal');
         const errorMessage = document.getElementById('error-message');
         const closeErrorModal = document.getElementById('close-error-modal');
-        
         const nameModal = document.getElementById('name-modal');
         const nameInput = document.getElementById('name-input');
         const saveNameButton = document.getElementById('save-name-button');
-        
         const settingsModal = document.getElementById('settings-modal');
         const settingsButton = document.getElementById('settings-button');
         const closeSettingsModal = document.getElementById('close-settings-modal');
         const themeButtons = document.querySelectorAll('.theme-button');
-
         const aiNameInput = document.getElementById('ai-name-input');
         const saveAiNameButton = document.getElementById('save-ai-name-button');
 
@@ -286,23 +255,16 @@
         let columns;
         let drops;
         const fontSize = 18;
-        const characters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789@#$%^&*()"; 
-        
+        const characters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789@#$%^&*()";
+
         // --- App State ---
-        let db, auth, userId, userName, currentTheme;
-        let aiName = "Gyani"; // Default AI Name
+        let db, auth, userId, userName, currentTheme = "nepali-red";
+        let aiName = "Gyani";
         let profileDocRef;
 
-        // --- Firebase & App Config ---
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
-        const firebaseConfig = JSON.parse(typeof __firebase_config !== 'undefined' ? __firebase_config : '{}');
-        const apiKey = ""; // API key for Gemini
-        const geminiApiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
-
-        // System Prompt will be constructed dynamically
+        // --- Gemini API ---
+        const geminiApiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${geminiApiKey}`;
         let systemPrompt = ``;
-        
-        // --- Functions ---
 
         // --- Canvas Animation ---
         function setupCanvas() {
@@ -312,14 +274,11 @@
             drops = [];
             for (let i = 0; i < columns; i++) drops[i] = 1;
         }
-
         function drawMatrixRain() {
-            ctx.fillStyle = "rgba(0, 0, 0, 0.05)"; // Fading effect
+            ctx.fillStyle = "rgba(0, 0, 0, 0.05)";
             ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-            ctx.fillStyle = getComputedStyle(document.documentElement).getPropertyValue('--color-primary'); // Use theme color
+            ctx.fillStyle = getComputedStyle(document.documentElement).getPropertyValue('--color-primary');
             ctx.font = `${fontSize}px 'VT323'`;
-
             for (let i = 0; i < drops.length; i++) {
                 const text = characters[Math.floor(Math.random() * characters.length)];
                 ctx.fillText(text, i * fontSize, drops[i] * fontSize);
@@ -327,6 +286,9 @@
                 drops[i]++;
             }
         }
+        setupCanvas();
+        setInterval(drawMatrixRain, 60);
+        window.addEventListener('resize', setupCanvas);
 
         // --- Theming ---
         function applyTheme(themeName) {
@@ -394,50 +356,40 @@
             modal.classList.add('hidden');
         }
 
-        // --- Firebase & Profile ---
+        // --- Firebase Initialization ---
         async function initFirebase() {
             try {
                 const app = initializeApp(firebaseConfig);
                 db = getFirestore(app);
                 auth = getAuth(app);
                 setLogLevel('Debug');
-
                 onAuthStateChanged(auth, async (user) => {
                     if (user) {
                         userId = user.uid;
                         setupProfileListener(userId);
                     } else {
-                        if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-                            await signInWithCustomToken(auth, __initial_auth_token);
-                        } else {
-                            await signInAnonymously(auth);
-                        }
+                        await signInAnonymously(auth);
                     }
                 });
             } catch (error) {
                 console.error("Firebase Init Error:", error);
-                displayError("Firebase suru garna sakiyena. (Firebase could not start.)");
+                displayError("Firebase suru garna sakiyena.");
             }
         }
 
         function setupProfileListener(uid) {
-            profileDocRef = doc(db, 'artifacts', appId, 'users', uid, 'settings', 'userProfile');
-            
+            // Store user profile settings under 'users' collection
+            profileDocRef = doc(db, "users", uid, "settings", "userProfile");
             onSnapshot(profileDocRef, (docSnap) => {
                 if (docSnap.exists()) {
                     const data = docSnap.data();
                     userName = data.name;
                     currentTheme = data.theme || 'nepali-red'; 
-                    aiName = data.aiName || 'Gyani'; // Load AI Name
-                    
+                    aiName = data.aiName || 'Gyani';
                     applyTheme(currentTheme);
                     updateUIBasedOnProfile();
-
-                    if (!userName) {
-                        showModal(nameModal);
-                    } else {
-                        hideModal(nameModal);
-                    }
+                    if (!userName) showModal(nameModal);
+                    else hideModal(nameModal);
                 } else {
                     applyTheme('nepali-red');
                     updateUIBasedOnProfile();
@@ -447,20 +399,9 @@
         }
 
         function updateUIBasedOnProfile() {
-            // Update Header Title
             headerTitle.textContent = `/usr/bin/${aiName}`;
-            
-            // Update Welcome Message
-            if (userName) {
-                welcomeMessage.textContent = `> ${userName} lai swagat chha!`;
-            } else {
-                welcomeMessage.textContent = ``;
-            }
-
-            // Update AI Name Input in Settings Modal
+            welcomeMessage.textContent = userName ? `> ${userName} lai swagat chha!` : '';
             aiNameInput.value = aiName;
-
-            // Dynamically set the system prompt
             systemPrompt = `
 You are "${aiName}" (The Wise One), a helpful and witty AI guru from Nepal.
 A user named "${userName || 'user'}" has asked you a question.
@@ -472,37 +413,32 @@ Example: {"quote": "Gyan nai shakti ho, karma nai puja ho.\\nAfno marga china, s
 
         async function saveProfileData(dataToSave) {
             if (!profileDocRef) {
-                displayError("Profile ref not set! Authentication error.");
+                displayError("Profile ref not set!");
                 return;
             }
             try {
                 await setDoc(profileDocRef, dataToSave, { merge: true });
             } catch (error) {
                 console.error("Error saving profile:", error);
-                displayError("Profile surakshit garna sakiyena. (Could not save profile.)");
+                displayError("Profile surakshit garna sakiyena.");
             }
         }
 
         // --- Gemini API Call ---
         async function handleQuery() {
             if (!userName) {
-                displayError("Kripaya pahile tapai'nko nam surakshit garnuhos. (Please save your name first.)");
+                displayError("Kripaya pahile nam surakshit garnuhos.");
                 showModal(nameModal);
                 return;
             }
-            
             const query = userPrompt.value;
             if (!query) return;
-
             userPrompt.value = "";
             loadingIndicator.classList.remove('hidden');
             responseArea.innerHTML = '';
             submitButton.disabled = true;
             submitButton.classList.add('opacity-50');
-
-            // Add user's name to the query
             const fullQuery = `User: ${userName}. Question: ${query}`;
-
             try {
                 const payload = {
                     contents: [{ parts: [{ text: fullQuery }] }],
@@ -516,19 +452,17 @@ Example: {"quote": "Gyan nai shakti ho, karma nai puja ho.\\nAfno marga china, s
                         }
                     }
                 };
-                
                 const result = await fetchWithBackoff(geminiApiUrl, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(payload)
                 });
-                
                 const responseData = extractJsonFromResponse(result);
                 displayResponse(query, responseData);
 
             } catch (error) {
                 console.error("Error calling Gemini API:", error);
-                displayError(error.message || "AI bata pratikriya prapta garna sakiyena. (Could not get response from AI.)");
+                displayError(error.message || "AI bata pratikriya prapta garna sakiyena.");
             } finally {
                 loadingIndicator.classList.add('hidden');
                 submitButton.disabled = false;
@@ -559,21 +493,18 @@ Example: {"quote": "Gyan nai shakti ho, karma nai puja ho.\\nAfno marga china, s
         function extractJsonFromResponse(result) {
             try {
                 const text = result.candidates[0].content.parts[0].text;
-                // Safely parse JSON, handling potential markdown fences
-                const jsonMatch = text.match(/```json\n([\s\S]*?)\n```/);
+                const jsonMatch = text.match(/```json\s*([\s\S]*?)```/);
                 const jsonText = jsonMatch ? jsonMatch[1].trim() : text.trim();
                 return JSON.parse(jsonText);
             } catch (e) {
                 console.error("Failed to parse JSON response:", result, e);
-                throw new Error("AI ko pratikriya bujhna sakiyena. (Could not understand AI's response.)");
+                throw new Error("AI ko pratikriya bujhna sakiyena.");
             }
         }
 
-        // --- UI Display ---
         function displayResponse(query, responseData) {
             const formattedQuote = responseData.quote.replace(/\\n/g, '<br>');
             const aiDisplayName = responseData.by || aiName;
-
             responseArea.innerHTML = `
                 <p class="mb-2 opacity-70" style="color: var(--color-header-text);">&gt; ${userName} ko prashna: "${query}"</p>
                 <div class="border-l-2 pl-3" style="border-color: var(--color-quote-border);">
@@ -599,28 +530,17 @@ Example: {"quote": "Gyan nai shakti ho, karma nai puja ho.\\nAfno marga china, s
         userPrompt.addEventListener('keydown', (e) => {
             if (e.key === 'Enter') handleQuery();
         });
-        
         closeErrorModal.addEventListener('click', () => hideModal(errorModal));
-
-        // User Name Modal
         saveNameButton.addEventListener('click', () => {
             const newName = nameInput.value.trim();
-            if (newName) {
-                saveProfileData({ name: newName });
-            } else {
-                displayError("Kripaya ek manya nam pravishta garnuhos. (Please enter a valid name.)");
-            }
+            if (newName) saveProfileData({ name: newName });
+            else displayError("Kripaya ek manya nam pravishta garnuhos.");
         });
-
-        // Settings Modal
         settingsButton.addEventListener('click', () => showModal(settingsModal));
         closeSettingsModal.addEventListener('click', () => hideModal(settingsModal));
-        
-        // Save AI Name
         saveAiNameButton.addEventListener('click', () => {
             const newAiName = aiNameInput.value.trim();
             if (newAiName) {
-                // Capitalize the first letter for display consistency
                 const formattedAiName = newAiName.charAt(0).toUpperCase() + newAiName.slice(1);
                 saveProfileData({ aiName: formattedAiName });
                 hideModal(settingsModal);
@@ -628,8 +548,6 @@ Example: {"quote": "Gyan nai shakti ho, karma nai puja ho.\\nAfno marga china, s
                 displayError("Kripaya AI ko lagi ek nam pravishta garnuhos.");
             }
         });
-
-        // Save Theme
         themeButtons.forEach(button => {
             button.addEventListener('click', () => {
                 const themeName = button.dataset.theme;
@@ -637,12 +555,9 @@ Example: {"quote": "Gyan nai shakti ho, karma nai puja ho.\\nAfno marga china, s
                 hideModal(settingsModal);
             });
         });
-            
-        // --- App Initialization ---
-        setupCanvas();
-        setInterval(drawMatrixRain, 60);
-        window.addEventListener('resize', setupCanvas);
 
-        </script>
+        // --- App Initialization ---
+        initFirebase();
+    </script>
 </body>
 </html>
